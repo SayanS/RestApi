@@ -2,6 +2,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.restassured.response.Response;
 import controllers.UserController;
+import models.Message;
 import models.User;
 import org.apache.http.Consts;
 import org.apache.http.HttpResponse;
@@ -14,8 +15,14 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -157,29 +164,96 @@ public class SampleTestCase {
             request.releaseConnection();
         }
 
-        String s="{\"name\":\"HTTProom2\",\"channelType\":\"public\",\"description\":\"qqqqqqqqqqqqqqqqqqqqqqqqqqqqq\",\"members\":[membs]}";
-        String m="746,955,923,899,907,915,931,939,947,963,971,979,987,995,1003,1011,1019,1027,1043,1035,1051,1059,1067,1075,1083,1091,1099,1107,1115,1123,1131,1139,1147,1155,1163,1171,1179,1187,3,395,867,875,883,891,156,949,933,901,229,909,917,925,941,957,965,973,981,989,997,1005,1013,1021,1029,1037,1045,1053,1061,1069,1077,1093,1085,1101,1109,1117,1125,1133,1141,1149,1157,1165,1173,1181,1189,5,37,221,261,869,877,885,893,54,86,959,927,879,903,911,919,935,951,943,967,975,983,991,999,1007,1015,1023,1031,1039,1047,1055,1063,1071,1079,1087,1095,1103,1111,1119,1127,1135,1143,1151,1159,1167,1175,1183,23,863,871,887,895,64,945,881,865,905,913,921,929,937,953,961,969,977,985,993,1001,1009,1017,1025,1033,1041,1049,1057,1065,1073,1089,1097,1105,1113,1121,1129,1137,1145,1153,1161,1169,1177,1185,873,889,897";
-        for (int i = 3; i <= 20; i++) {
-            s=s.replace("HTTProom"+(i-1),"HTTProom"+i);
-            s=s.replace("membs", m);
-            HttpPost request = new HttpPost("https://chat.aimprosoft.com/api/rooms");
-            StringEntity params = new StringEntity(s);
-            request.setEntity(params);
-            request.addHeader("Origin", "https://chat.aimprosoft.com");
-            request.addHeader("Authorization", "bearer " + accessToken.asText());
-            request.addHeader("Content-Type", "application/json");
-            request.addHeader("Referer", "https://chat.aimprosoft.com/index.html");
-            request.addHeader("Accept-Encoding", "gzip, deflate, br");
-            request.addHeader("Accept", "*/*");
-            request.addHeader("Accept-Language", "en-US,en;q=0.8");
-            response = client.execute(request);
-            request.releaseConnection();
-        }
+        String s = "{\"name\":\"HTTProom2\",\"channelType\":\"public\",\"description\":\"qqqqqqqqqqqqqqqqqqqqqqqqqqqqq\",\"members\":[membs]}";
+        String m = "746,955,923,899,907,915,931,939,947,963,971,979,987,995,1003,1011,1019,1027,1043,1035,1051,1059,1067,1075,1083,1091,1099,1107,1115,1123,1131,1139,1147,1155,1163,1171,1179,1187,3,395,867,875,883,891,156,949,933,901,229,909,917,925,941,957,965,973,981,989,997,1005,1013,1021,1029,1037,1045,1053,1061,1069,1077,1093,1085,1101,1109,1117,1125,1133,1141,1149,1157,1165,1173,1181,1189,5,37,221,261,869,877,885,893,54,86,959,927,879,903,911,919,935,951,943,967,975,983,991,999,1007,1015,1023,1031,1039,1047,1055,1063,1071,1079,1087,1095,1103,1111,1119,1127,1135,1143,1151,1159,1167,1175,1183,23,863,871,887,895,64,945,881,865,905,913,921,929,937,953,961,969,977,985,993,1001,1009,1017,1025,1033,1041,1049,1057,1065,1073,1089,1097,1105,1113,1121,1129,1137,1145,1153,1161,1169,1177,1185,873,889,897";
+        // for (int i = 3; i <= 20; i++) {
+        //   s=s.replace("HTTProom"+(i-1),"HTTProom"+i);
+        s = s.replace("membs", m);
+        HttpPost request = new HttpPost("https://chat.aimprosoft.com/api/rooms");
+        StringEntity params = new StringEntity(s);
+        request.setEntity(params);
+        request.addHeader("Origin", "https://chat.aimprosoft.com");
+        request.addHeader("Authorization", "bearer " + accessToken.asText());
+        request.addHeader("Content-Type", "application/json");
+        request.addHeader("Referer", "https://chat.aimprosoft.com/index.html");
+        request.addHeader("Accept-Encoding", "gzip, deflate, br");
+        request.addHeader("Accept", "*/*");
+        request.addHeader("Accept-Language", "en-US,en;q=0.8");
+        response = client.execute(request);
+        request.releaseConnection();
+        //}
+        loginRequest.releaseConnection();
+    }
 
+    @Test
+    public void checkAddToFavorite() throws IOException {
+        HttpClient client = new DefaultHttpClient();
+        ResponseHandler<String> handler = new BasicResponseHandler();
+
+        HttpPost loginRequest = new HttpPost("https://chat.aimprosoft.com/oauth/token?grant_type=password&type=LDAP");
+        List<NameValuePair> credentials = new ArrayList<NameValuePair>();
+        credentials.add(new BasicNameValuePair("username", "s.garmaev"));
+        credentials.add(new BasicNameValuePair("password", "Rfhfylfitkm"));
+        credentials.add(new BasicNameValuePair("client_id", "aimprosoft_chat"));
+        credentials.add(new BasicNameValuePair("client_secret", "aimprosoft_chat_secret"));
+        loginRequest.setEntity(new UrlEncodedFormEntity(credentials, Consts.UTF_8));
+        loginRequest.addHeader("Origin", "https://chat.aimprosoft.com");
+        loginRequest.addHeader("Content-Type", "application/x-www-form-urlencoded");
+        loginRequest.addHeader("Referer", "https://chat.aimprosoft.com/index.html");
+        loginRequest.addHeader("Accept-Encoding", "gzip, deflate, br");
+        loginRequest.addHeader("Accept", "*/*");
+
+        HttpResponse response = client.execute(loginRequest);
+        String body = handler.handleResponse(response);
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode accessToken = mapper.readTree(body).get("access_token");
+
+//        Case when request via Httpclient - getting messages from General room
+//        HttpGet request = new HttpGet("https://chat.aimprosoft.com/api/rooms/4/histories?messageQuantity=40");
+//        request.addHeader("Authorization", "bearer " + accessToken.asText());
+//        request.addHeader("Referer", "https://chat.aimprosoft.com/index.html");
+//        request.addHeader("Accept-Encoding", "gzip, deflate, br");
+//        request.addHeader("Accept", "*/*");
+//        request.addHeader("Accept-Language", "en-US,en;q=0.8");
+//        response = client.execute(request);
+//        body = handler.handleResponse(response);
+//        mapper.readTree(body);
+//        request.releaseConnection();
+
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "bearer " + accessToken.asText());
+        headers.add("Referer", "https://chat.aimprosoft.com/index.html");
+        headers.add("Accept-Encoding", "gzip, deflate, br");
+        headers.add("Accept", "*/*");
+        headers.add("Accept-Language", "en-US,en;q=0.8");
+
+        HttpEntity requestEntity = new HttpEntity(headers);
+        ResponseEntity rssResponse = restTemplate.exchange("https://chat.aimprosoft.com/api/rooms/5870/histories?lastId=677769&messageQuantity=40&reverse=true", HttpMethod.GET,
+                requestEntity, Message[].class);
+
+        headers.add("Origin", "https://chat.aimprosoft.com");
+        headers.add("Content-Type", "application/json");
+
+        for (Long idMessage : getIdMessages(rssResponse)) {
+            // create request body
+            JSONObject requestBody = new JSONObject();
+            requestBody.put("id", idMessage);
+            HttpEntity<String> entity = new HttpEntity<String>(requestBody.toString(), headers);
+            ResponseEntity<String> resp = restTemplate.exchange("https://chat.aimprosoft.com/api/histories/5870/add/starred",
+                    HttpMethod.POST, entity, String.class);
+        }
 
 
         loginRequest.releaseConnection();
     }
 
-
+    public List<Long> getIdMessages(ResponseEntity rssResponse) {
+        List<Long> idMessages = new ArrayList<>();
+        for (Message message : (Message[]) rssResponse.getBody()) {
+            idMessages.add(message.getId());
+        }
+        return idMessages;
+    }
 }
